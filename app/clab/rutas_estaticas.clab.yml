@@ -1,0 +1,126 @@
+# Parametros al desplegar (variables de entorno del host):
+#   USER_ID  identifica al usuario; entra en el nombre del lab y en cada nodo
+#   TTL      segundos de vida; al vencer, cada contenedor se apaga solo
+#
+#   USER_ID=u123 TTL=1800 containerlab deploy -t rutas_estaticas.clab.yml
+#
+# Sin USER_ID el lab se llama rutas-estaticas (igual que antes).
+# Sin TTL (o 0) los contenedores no se autodestruyen.
+
+name: rutas-estaticas${USER_ID:+-$USER_ID}
+
+# Todos los nodos quedan accesibles por SSH (root / clab123).
+# En los routers la shell de root es vtysh: al entrar por SSH
+# se cae directamente en la CLI del router, como en un equipo real.
+
+topology:
+  defaults:
+    env:
+      USER_ID: ${USER_ID:-}
+      LAB_TTL: ${TTL:-0}
+    labels:
+      ipv6beready.user_id: ${USER_ID:-}
+      ipv6beready.ttl: ${TTL:-0}
+    auto-remove: true
+  nodes:
+    r1:
+      kind: linux
+      image: quay.io/frrouting/frr:10.5.4
+      cpu: 1
+      memory: 256Mb
+      binds:
+        - ./daemons:/etc/frr/daemons
+        - ./capture-r1:/tmp
+      exec:
+        - apk add --no-cache openssh
+        - ssh-keygen -A
+        - sh -c "echo root:clab123 | chpasswd"
+        - sed -i "s/^#PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config
+        - sed -i "1s#/bin/sh#/usr/bin/vtysh#" /etc/passwd
+        - /usr/sbin/sshd
+        - sh -c 'ttl="$${LAB_TTL:-0}"; if [ "$$ttl" -gt 0 ] 2>/dev/null; then (sleep $$ttl; kill -s TERM 1) </dev/null >/dev/null 2>&1 & fi'
+    r2:
+      kind: linux
+      image: quay.io/frrouting/frr:10.5.4
+      cpu: 1
+      memory: 256Mb
+      binds:
+        - ./daemons:/etc/frr/daemons
+        - ./capture-r2:/tmp
+      exec:
+        - apk add --no-cache openssh
+        - ssh-keygen -A
+        - sh -c "echo root:clab123 | chpasswd"
+        - sed -i "s/^#PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config
+        - sed -i "1s#/bin/sh#/usr/bin/vtysh#" /etc/passwd
+        - /usr/sbin/sshd
+        - sh -c 'ttl="$${LAB_TTL:-0}"; if [ "$$ttl" -gt 0 ] 2>/dev/null; then (sleep $$ttl; kill -s TERM 1) </dev/null >/dev/null 2>&1 & fi'
+    r3:
+      kind: linux
+      image: quay.io/frrouting/frr:10.5.4
+      cpu: 1
+      memory: 256Mb
+      binds:
+        - ./daemons:/etc/frr/daemons
+        - ./capture-r3:/tmp
+      exec:
+        - apk add --no-cache openssh
+        - ssh-keygen -A
+        - sh -c "echo root:clab123 | chpasswd"
+        - sed -i "s/^#PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config
+        - sed -i "1s#/bin/sh#/usr/bin/vtysh#" /etc/passwd
+        - /usr/sbin/sshd
+        - sh -c 'ttl="$${LAB_TTL:-0}"; if [ "$$ttl" -gt 0 ] 2>/dev/null; then (sleep $$ttl; kill -s TERM 1) </dev/null >/dev/null 2>&1 & fi'
+    pc1:
+      kind: linux
+      image: ghcr.io/hellt/network-multitool
+      cpu: 0.5
+      memory: 128Mb
+      exec:
+        - ip addr add 10.10.10.10/24 dev eth1
+        - ip route add 10.0.0.0/8 via 10.10.10.1 dev eth1
+        - apk add --no-cache openssh
+        - ssh-keygen -A
+        - sh -c "echo root:clab123 | chpasswd"
+        - sed -i "s/^#PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config
+        - /usr/sbin/sshd
+        - sh -c 'ttl="$${LAB_TTL:-0}"; if [ "$$ttl" -gt 0 ] 2>/dev/null; then (sleep $$ttl; kill -s TERM 1) </dev/null >/dev/null 2>&1 & fi'
+    pc2:
+      kind: linux
+      image: ghcr.io/hellt/network-multitool
+      cpu: 0.5
+      memory: 128Mb
+      exec:
+        - ip addr add 10.20.20.10/24 dev eth1
+        - ip route add 10.0.0.0/8 via 10.20.20.1 dev eth1
+        - apk add --no-cache openssh
+        - ssh-keygen -A
+        - sh -c "echo root:clab123 | chpasswd"
+        - sed -i "s/^#PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config
+        - /usr/sbin/sshd
+        - sh -c 'ttl="$${LAB_TTL:-0}"; if [ "$$ttl" -gt 0 ] 2>/dev/null; then (sleep $$ttl; kill -s TERM 1) </dev/null >/dev/null 2>&1 & fi'
+    pc3:
+      kind: linux
+      image: ghcr.io/hellt/network-multitool
+      cpu: 0.5
+      memory: 128Mb
+      exec:
+        - ip addr add 10.30.30.10/24 dev eth1
+        - ip route add 10.0.0.0/8 via 10.30.30.1 dev eth1
+        - apk add --no-cache openssh
+        - ssh-keygen -A
+        - sh -c "echo root:clab123 | chpasswd"
+        - sed -i "s/^#PermitRootLogin.*/PermitRootLogin yes/" /etc/ssh/sshd_config
+        - /usr/sbin/sshd
+        - sh -c 'ttl="$${LAB_TTL:-0}"; if [ "$$ttl" -gt 0 ] 2>/dev/null; then (sleep $$ttl; kill -s TERM 1) </dev/null >/dev/null 2>&1 & fi'
+  links:
+    # LAN R1: 10.10.10.0/24
+    - endpoints: ["pc1:eth1", "r1:eth1"]
+    # Enlace R1-R2: 10.1.2.0/24
+    - endpoints: ["r1:eth2", "r2:eth1"]
+    # LAN R2: 10.20.20.0/24
+    - endpoints: ["pc2:eth1", "r2:eth2"]
+    # Enlace R2-R3: 10.2.3.0/24
+    - endpoints: ["r2:eth3", "r3:eth1"]
+    # LAN R3: 10.30.30.0/24
+    - endpoints: ["pc3:eth1", "r3:eth2"]
