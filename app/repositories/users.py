@@ -61,11 +61,13 @@ def insert_user(user: User) -> User:
         "email": str(user.email),
         "name": user.name,
         "hashed_password": user.hashed_password,
-        "google_id": user.google_id,
-        "avatar": user.avatar,
         "is_active": user.is_active,
         "is_superuser": user.is_superuser,
     }
+    if user.google_id is not None:
+        doc["google_id"] = user.google_id
+    if user.avatar is not None:
+        doc["avatar"] = user.avatar
     result = _collection().insert_one(doc)
     user.id = str(result.inserted_id)
     return user
