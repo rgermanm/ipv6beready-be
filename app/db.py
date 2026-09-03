@@ -49,9 +49,9 @@ class _ParamikoTunnel:
             port=self._ssh_port,
             username=self._ssh_username,
             password=self._ssh_password,
-            timeout=30,
-            banner_timeout=30,
-            auth_timeout=30,
+            timeout=10,
+            banner_timeout=10,
+            auth_timeout=10,
         )
         transport = client.get_transport()
         if transport is None:
@@ -168,41 +168,59 @@ def _rewrite_uri_host(uri: str, host: str, port: int) -> str:
     return urlunparse(parsed._replace(netloc=f"{userinfo}{host}:{port}"))
 
 
-def connect() -> None:
+def is_connected() -> bool:
+    return _client is not None
+
+
+def connect() -> bool:
     global _client, _tunnel
     if _client is not None:
-        return
+        return True
 
     uri = settings.mongodb_uri
-    if settings.mongodb_ssh_tunnel:
-        if not settings.clab_remote_password:
-            raise RuntimeError(
-                "Mongo SSH tunnel is enabled but CLAB_REMOTE_PASSWORD is empty"
+    try:
+        if settings.mongodb_ssh_tunnel:
+            logger.info(
+                "Opening Mongo SSH tunnel via %s:%s",
+                settings.clab_remote_host,
+                settings.clab_remote_port,
             )
-        _tunnel = _ParamikoTunnel(
-            ssh_host=settings.clab_remote_host,
-            ssh_port=settings.clab_remote_port,
-            ssh_username=settings.clab_remote_username,
-            ssh_password=settings.clab_remote_password,
-            remote_host=settings.mongodb_tunnel_host,
-            remote_port=settings.mongodb_tunnel_port,
-        )
-        _tunnel.start()
-        uri = _rewrite_uri_host(uri, "127.0.0.1", _tunnel.local_bind_port)
-        logger.info(
-            "Mongo SSH tunnel %s:%s -> 127.0.0.1:%s",
-            settings.mongodb_tunnel_host,
-            settings.mongodb_tunnel_port,
-            _tunnel.local_bind_port,
-        )
+            if not settings.clab_remote_password:
+                raise RuntimeError(
+                    "Mongo SSH tunnel is enabled but CLAB_REMOTE_PASSWORD is empty"
+                )
+            _tunnel = _ParamikoTunnel(
+                ssh_host=settings.clab_remote_host,
+                ssh_port=settings.clab_remote_port,
+                ssh_username=settings.clab_remote_username,
+                ssh_password=settings.clab_remote_password,
+                remote_host=settings.mongodb_tunnel_host,
+                remote_port=settings.mongodb_tunnel_port,
+            )
+            _tunnel.start()
+            uri = _rewrite_uri_host(uri, "127.0.0.1", _tunnel.local_bind_port)
+            logger.info(
+                "Mongo SSH tunnel %s:%s -> 127.0.0.1:%s",
+                settings.mongodb_tunnel_host,
+                settings.mongodb_tunnel_port,
+                _tunnel.local_bind_port,
+            )
 
-    _client = MongoClient(
-        uri,
-        serverSelectionTimeoutMS=15000,
-        connectTimeoutMS=15000,
-    )
-    _client.admin.command("ping")
-    logger.info("Connected to MongoDB database %s", settings.mongodb_db)
+        _client = MongoClient(
+            uri,
+            serverSelectionTimeoutMS=8000,
+            connectTimeoutMS=8000,
+        )
+        _client.admin.command("ping")
+        logger.info("Connected to MongoDB database %s", settings.mongodb_db)
+        return True
+    except Exception:
+        logger.exception(
+            "MongoDB is unavailable; API will start in degraded mode "
+            "(catalog from local files, auth/instances disabled)"
+        )
+        close()
+        return False
 
 
 def close() -> None:

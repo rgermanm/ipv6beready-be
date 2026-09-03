@@ -15,10 +15,11 @@ from app.routers import auth, console, labs, sessions
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    connect_db()
-    seed_labs()
-    ensure_user_indexes()
-    ensure_instance_indexes()
+    mongo_ok = connect_db()
+    if mongo_ok:
+        seed_labs()
+        ensure_user_indexes()
+        ensure_instance_indexes()
     yield
     close_db()
 

@@ -2,7 +2,7 @@ from pymongo.collection import Collection
 from pydantic import ValidationError
 
 from app.data.labs import LABS
-from app.db import get_db
+from app.db import get_db, is_connected
 from app.models.lab import LabDefinition, LabSummary
 
 COLLECTION = "labs"
@@ -23,6 +23,9 @@ def seed_labs() -> None:
 
     Every lab document must include at least ``path`` and ``description``.
     """
+    if not is_connected():
+        return
+
     collection = _collection()
     ensure_indexes()
 
@@ -43,7 +46,19 @@ def seed_labs() -> None:
         )
 
 
+def _catalog_summaries() -> list[LabSummary]:
+    return [
+        LabSummary.model_validate(
+            lab.model_dump(exclude={"formula", "exercises"})
+        )
+        for lab in LABS.values()
+    ]
+
+
 def list_labs() -> list[LabSummary]:
+    if not is_connected():
+        return _catalog_summaries()
+
     docs = _collection().find(
         {"title": {"$exists": True}, "path": {"$exists": True}},
         {"formula": 0, "exercises": 0},
@@ -56,16 +71,19 @@ def list_labs() -> list[LabSummary]:
             labs.append(LabSummary.model_validate(doc))
         except ValidationError:
             continue
-    return labs
+    return labs or _catalog_summaries()
 
 
 def get_lab(lab_id: str) -> LabDefinition | None:
+    if not is_connected():
+        return LABS.get(lab_id)
+
     doc = _collection().find_one({"_id": lab_id})
     if not doc:
-        return None
+        return LABS.get(lab_id)
     raw_id = doc.pop("_id", lab_id)
     doc["id"] = str(raw_id)
     try:
         return LabDefinition.model_validate(doc)
     except ValidationError:
-        return None
+        return LABS.get(lab_id)
