@@ -23,7 +23,7 @@ class LabInstance(BaseModel):
     clab_name: str
     path: str
     topology_file: str
-    status: Literal["starting", "running", "stopped", "error"]
+    status: Literal["starting", "running", "stopped", "expired", "error"]
     ttl_seconds: int
     created_at: datetime
     expires_at: datetime
@@ -48,7 +48,7 @@ class LabInstancePublic(BaseModel):
     roomSlug: str
     userId: str
     clabName: str
-    status: Literal["starting", "running", "stopped", "error"]
+    status: Literal["starting", "running", "stopped", "expired", "error"]
     endpoint: str | None = None
     protocol: Literal["ssh", "http", "rdp"] = "ssh"
     port: int

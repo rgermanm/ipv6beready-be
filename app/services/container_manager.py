@@ -30,12 +30,15 @@ class ContainerManager:
 
     def get_instance(self, lab_id: str, user_id: str) -> LabInstance | None:
         instance = instance_repo.get_active_instance(user_id, lab_id)
-        if not instance:
-            return None
-        if instance.is_expired():
-            self._expire_instance(instance)
-            return None
-        return instance
+        if instance:
+            if instance.is_expired():
+                self._expire_instance(instance)
+            return instance
+
+        latest = instance_repo.get_latest_instance(user_id, lab_id)
+        if latest and latest.status == "expired":
+            return latest
+        return None
 
     def create_instance(self, lab: LabDefinition, user_id: str) -> LabInstance:
         existing = self.get_instance(lab.id, user_id)
@@ -142,7 +145,7 @@ class ContainerManager:
 
         lab = get_lab(instance.lab_id)
         self._destroy_runtime(lab, instance)
-        instance_repo.mark_stopped(instance, message="Lab TTL expired")
+        instance_repo.mark_expired(instance, message="Lab instance expired")
 
     def _destroy_runtime(self, lab: LabDefinition | None, instance: LabInstance) -> None:
         if lab and lab.formula.provider == "clab" and lab.formula.clab:

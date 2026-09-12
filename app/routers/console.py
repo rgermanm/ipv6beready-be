@@ -38,7 +38,12 @@ async def lab_console(
     instance = container_manager.get_instance(lab_id, user.id)
     if not instance or instance.status != "running":
         if not settings.mock_containers:
-            await websocket.close(code=4403, reason="Lab instance is not running")
+            reason = (
+                "Lab instance expired"
+                if instance and instance.status == "expired"
+                else "Lab instance is not running"
+            )
+            await websocket.close(code=4403, reason=reason)
             return
 
     node_host = None

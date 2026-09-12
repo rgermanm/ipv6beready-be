@@ -70,8 +70,22 @@ def get_active_instance(user_id: str, lab_id: str) -> LabInstance | None:
     return _doc_to_instance(doc) if doc else None
 
 
+def get_latest_instance(user_id: str, lab_id: str) -> LabInstance | None:
+    doc = _collection().find_one(
+        {"user_id": user_id, "lab_id": lab_id},
+        sort=[("created_at", -1)],
+    )
+    return _doc_to_instance(doc) if doc else None
+
+
 def mark_stopped(instance: LabInstance, message: str | None = None) -> LabInstance:
     instance.status = "stopped"
     if message:
         instance.message = message
+    return save_instance(instance)
+
+
+def mark_expired(instance: LabInstance, message: str | None = None) -> LabInstance:
+    instance.status = "expired"
+    instance.message = message or "Lab instance expired"
     return save_instance(instance)
