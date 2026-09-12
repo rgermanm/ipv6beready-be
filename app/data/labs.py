@@ -6,8 +6,8 @@ ROUTERS = ["r1", "r2", "r3"]
 
 STATIC_ROUTING_EXERCISES: list[Exercise] = [
     Exercise(
-        id="step-2",
-        number=2,
+        id="step-1",
+        number=1,
         title="Verificar tabla de ruteo vacía",
         description=(
             'Efectuar en cualquiera de los routers el comando "show ip route" para verificar '
@@ -24,8 +24,8 @@ STATIC_ROUTING_EXERCISES: list[Exercise] = [
         ],
     ),
     Exercise(
-        id="step-3",
-        number=3,
+        id="step-2",
+        number=2,
         title="Verificar protocolos de ruteo",
         description=(
             'Efectuar en cualquiera de los routers el comando "show ip protocols". '
@@ -41,8 +41,8 @@ STATIC_ROUTING_EXERCISES: list[Exercise] = [
         ],
     ),
     Exercise(
-        id="step-4",
-        number=4,
+        id="step-3",
+        number=3,
         title="Configurar direcciones IP en todos los routers",
         description=(
             "Configurar en todos los routers las direcciones IP indicadas. "
@@ -90,8 +90,8 @@ STATIC_ROUTING_EXERCISES: list[Exercise] = [
         ],
     ),
     Exercise(
-        id="step-5",
-        number=5,
+        id="step-4",
+        number=4,
         title="Verificar interfaces con show ip interface brief",
         description=(
             'Verificar el estado de la configuración aplicada con el comando '
@@ -108,8 +108,8 @@ STATIC_ROUTING_EXERCISES: list[Exercise] = [
         ],
     ),
     Exercise(
-        id="step-6",
-        number=6,
+        id="step-5",
+        number=5,
         title="Ping al vecino inmediato",
         description=(
             "Verificar que se puede llegar al equipo vecino inmediato mediante el comando ping. "
@@ -125,8 +125,8 @@ STATIC_ROUTING_EXERCISES: list[Exercise] = [
         ],
     ),
     Exercise(
-        id="step-7",
-        number=7,
+        id="step-6",
+        number=6,
         title="Verificar rutas conectadas (C)",
         description=(
             'Efectuar en cualquiera de los routers el comando "show ip route". '
@@ -144,8 +144,8 @@ STATIC_ROUTING_EXERCISES: list[Exercise] = [
         ],
     ),
     Exercise(
-        id="step-8",
-        number=8,
+        id="step-7",
+        number=7,
         title="Rutas estáticas en R1",
         description=(
             "Configurar en R1 las rutas estáticas para llegar a las redes 10.20.20.0/24 "
@@ -163,8 +163,8 @@ STATIC_ROUTING_EXERCISES: list[Exercise] = [
         ],
     ),
     Exercise(
-        id="step-9",
-        number=9,
+        id="step-8",
+        number=8,
         title="Rutas estáticas en R2",
         description=(
             "Configurar en R2 las rutas estáticas para llegar a las redes 10.10.10.0/24 "
@@ -182,8 +182,8 @@ STATIC_ROUTING_EXERCISES: list[Exercise] = [
         ],
     ),
     Exercise(
-        id="step-10",
-        number=10,
+        id="step-9",
+        number=9,
         title="Rutas estáticas en R3",
         description=(
             "Configurar en R3 las rutas estáticas para llegar a las redes 10.10.10.0/24 "
@@ -201,8 +201,8 @@ STATIC_ROUTING_EXERCISES: list[Exercise] = [
         ],
     ),
     Exercise(
-        id="step-11",
-        number=11,
+        id="step-10",
+        number=10,
         title="Verificar rutas estáticas (S)",
         description=(
             'Verificar en los routers las redes configuradas con el comando "show ip route". '
@@ -218,8 +218,8 @@ STATIC_ROUTING_EXERCISES: list[Exercise] = [
         ],
     ),
     Exercise(
-        id="step-12",
-        number=12,
+        id="step-11",
+        number=11,
         title="Ping desde PC_A a la LAN de R3",
         description=(
             "Desde la PC_A efectuar un ping a la dirección IP 10.30.30.10 de la LAN del router R3."

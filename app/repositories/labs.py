@@ -35,6 +35,10 @@ def seed_labs() -> None:
 
         doc = lab.model_dump()
         doc.pop("id", None)
+        # Display numbers are 1-based list order, independent of leftover guide ids
+        for index, exercise in enumerate(doc.get("exercises") or [], start=1):
+            exercise["number"] = index
+            exercise["id"] = f"step-{index}"
         # Keep clab.path aligned with the top-level lab path
         if doc.get("formula", {}).get("clab"):
             doc["formula"]["clab"]["path"] = lab.path
