@@ -247,6 +247,7 @@ LABS: dict[str, LabDefinition] = {
         difficulty="medium",
         duration_minutes=90,
         tags=["static-routing", "ios", "ipv4"],
+        enabled=True,
         exercise_count=len(STATIC_ROUTING_EXERCISES),
         path=STATIC_ROUTING_PATH,
         exercises=STATIC_ROUTING_EXERCISES,

@@ -83,6 +83,7 @@ class LabSummary(BaseModel):
     duration_minutes: int
     tags: list[str]
     exercise_count: int
+    enabled: bool = True
     # Absolute directory on the lab server that holds the .clab.yml
     path: str
 
