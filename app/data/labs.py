@@ -1,4 +1,15 @@
-from app.models.lab import ClabConfig, Exercise, ExerciseCheck, LabDefinition, LabFormula, LabCredentials
+from app.models.lab import (
+    ClabConfig,
+    Exercise,
+    ExerciseCheck,
+    LabCredentials,
+    LabDefinition,
+    LabFormula,
+    LabTopology,
+    TopologyEdge,
+    TopologyNode,
+    TopologyPosition,
+)
 
 STATIC_ROUTING_PATH = "/home/deploy/labs/networking001/lab-rutas_estaticas"
 
@@ -235,9 +246,28 @@ STATIC_ROUTING_EXERCISES: list[Exercise] = [
     ),
 ]
 
+STATIC_ROUTING_TOPOLOGY = LabTopology(
+    nodes=[
+        TopologyNode(id="pc-a1", type="pc", label="PC_A", clab_node="pc1", hostname="PC_A", ipv4="10.10.10.10", position=TopologyPosition(x=40, y=60)),
+        TopologyNode(id="r1", type="router", label="R1", clab_node="r1", hostname="R1", position=TopologyPosition(x=220, y=90)),
+        TopologyNode(id="r2", type="router", label="R2", clab_node="r2", hostname="R2", position=TopologyPosition(x=480, y=90)),
+        TopologyNode(id="r3", type="router", label="R3", clab_node="r3", hostname="R3", position=TopologyPosition(x=740, y=90)),
+        TopologyNode(id="pc-b1", type="pc", label="PC_B1", clab_node="pc2", hostname="PC_B1", ipv4="10.20.20.10", position=TopologyPosition(x=480, y=240)),
+        TopologyNode(id="pc-c1", type="pc", label="PC_C1", clab_node="pc3", hostname="PC_C1", ipv4="10.30.30.10", position=TopologyPosition(x=740, y=240)),
+    ],
+    edges=[
+        TopologyEdge(id="e-pca1-r1", source="pc-a1", target="r1", color="#00d4aa"),
+        TopologyEdge(id="e-r1-r2", source="r1", target="r2", color="#38bdf8"),
+        TopologyEdge(id="e-r2-r3", source="r2", target="r3", color="#38bdf8"),
+        TopologyEdge(id="e-pcb1-r2", source="pc-b1", target="r2", color="#00d4aa"),
+        TopologyEdge(id="e-pcc1-r3", source="pc-c1", target="r3", color="#00d4aa"),
+    ],
+)
+
 LABS: dict[str, LabDefinition] = {
     "static-routing-lab-01": LabDefinition(
         id="static-routing-lab-01",
+        slug="static-routing-lab-01",
         title="Lab 01 — Ruteo Estático",
         description=(
             "Configura 3 routers y verifica conectividad con rutas estáticas. "
@@ -251,6 +281,7 @@ LABS: dict[str, LabDefinition] = {
         exercise_count=len(STATIC_ROUTING_EXERCISES),
         path=STATIC_ROUTING_PATH,
         exercises=STATIC_ROUTING_EXERCISES,
+        topology=STATIC_ROUTING_TOPOLOGY,
         formula=LabFormula(
             provider="clab",
             protocol="ssh",

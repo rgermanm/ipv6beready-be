@@ -8,9 +8,6 @@ from app.services.ssh_proxy import bridge_console
 
 router = APIRouter(prefix="/labs", tags=["lab-console"])
 
-VALID_NODES = {"r1", "r2", "r3", "pc1", "pc2", "pc3"}
-
-
 @router.websocket("/{lab_id}/console/{node}")
 async def lab_console(
     websocket: WebSocket,
@@ -31,7 +28,8 @@ async def lab_console(
         await websocket.close(code=4404, reason="Lab not found")
         return
 
-    if node not in VALID_NODES:
+    allowed_nodes = {item.clab_node for item in (lab.topology.nodes if lab.topology else [])}
+    if allowed_nodes and node not in allowed_nodes:
         await websocket.close(code=4400, reason=f"Invalid node: {node}")
         return
 

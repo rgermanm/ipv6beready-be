@@ -74,8 +74,36 @@ class LabFormula(BaseModel):
     clab: ClabConfig | None = None
 
 
+class TopologyPosition(BaseModel):
+    x: float
+    y: float
+
+
+class TopologyNode(BaseModel):
+    id: str
+    type: Literal["router", "pc", "switch"] = "router"
+    label: str
+    clab_node: str
+    position: TopologyPosition
+    ipv4: str | None = None
+    hostname: str | None = None
+
+
+class TopologyEdge(BaseModel):
+    id: str
+    source: str
+    target: str
+    color: str | None = None
+
+
+class LabTopology(BaseModel):
+    nodes: list[TopologyNode] = Field(default_factory=list)
+    edges: list[TopologyEdge] = Field(default_factory=list)
+
+
 class LabSummary(BaseModel):
     id: str
+    slug: str | None = None
     title: str
     description: str
     category: str
@@ -89,5 +117,6 @@ class LabSummary(BaseModel):
 
 
 class LabDefinition(LabSummary):
-    exercises: list[Exercise]
+    exercises: list[Exercise] = Field(default_factory=list)
     formula: LabFormula
+    topology: LabTopology | None = None
