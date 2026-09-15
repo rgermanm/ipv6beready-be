@@ -28,11 +28,6 @@ async def lab_console(
         await websocket.close(code=4404, reason="Lab not found")
         return
 
-    allowed_nodes = {item.clab_node for item in (lab.topology.nodes if lab.topology else [])}
-    if allowed_nodes and node not in allowed_nodes:
-        await websocket.close(code=4400, reason=f"Invalid node: {node}")
-        return
-
     instance = container_manager.get_instance(lab_id, user.id)
     if not instance or instance.status != "running":
         if not settings.mock_containers:
@@ -43,6 +38,15 @@ async def lab_console(
             )
             await websocket.close(code=4403, reason=reason)
             return
+
+    catalog_nodes = {
+        item.clab_node for item in (lab.topology.nodes if lab.topology else [])
+    }
+    instance_nodes = {item.shortname for item in (instance.nodes if instance else [])}
+    allowed_nodes = catalog_nodes or instance_nodes
+    if allowed_nodes and node not in allowed_nodes:
+        await websocket.close(code=4400, reason=f"Invalid node: {node}")
+        return
 
     node_host = None
     if instance:

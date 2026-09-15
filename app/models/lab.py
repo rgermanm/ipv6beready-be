@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class LabCredentials(BaseModel):
@@ -57,6 +57,8 @@ class ClabConfig(BaseModel):
 class LabFormula(BaseModel):
     """Server-side recipe used to provision a container lab instance."""
 
+    model_config = ConfigDict(extra="ignore")
+
     provider: Literal["docker", "clab"] = "docker"
     image: str = ""
     container_name_prefix: str = ""
@@ -97,26 +99,72 @@ class TopologyEdge(BaseModel):
 
 
 class LabTopology(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     nodes: list[TopologyNode] = Field(default_factory=list)
     edges: list[TopologyEdge] = Field(default_factory=list)
 
 
 class LabSummary(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
     id: str
     slug: str | None = None
-    title: str
-    description: str
-    category: str
-    difficulty: Literal["easy", "medium", "hard"]
-    duration_minutes: int
-    tags: list[str]
-    exercise_count: int
+    title: str = ""
+    description: str = ""
+    category: str = "routing"
+    difficulty: Literal["easy", "medium", "hard"] = "medium"
+    duration_minutes: int = 60
+    tags: list[str] = Field(default_factory=list)
+    exercise_count: int = 0
     enabled: bool = True
     # Absolute directory on the lab server that holds the .clab.yml
-    path: str
+    path: str = ""
+
+    @field_validator("difficulty", mode="before")
+    @classmethod
+    def _coerce_difficulty(cls, value):
+        if value in ("easy", "medium", "hard"):
+            return value
+        return "medium"
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def _coerce_tags(cls, value):
+        return value if isinstance(value, list) else []
+
+    @field_validator("exercise_count", mode="before")
+    @classmethod
+    def _coerce_exercise_count(cls, value):
+        if isinstance(value, bool) or value is None or value == "":
+            return 0
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return 0
+
+    @field_validator("duration_minutes", mode="before")
+    @classmethod
+    def _coerce_duration(cls, value):
+        if isinstance(value, bool) or value is None or value == "":
+            return 60
+        try:
+            parsed = int(value)
+        except (TypeError, ValueError):
+            return 60
+        return parsed if parsed > 0 else 60
+
+    @field_validator("enabled", mode="before")
+    @classmethod
+    def _coerce_enabled(cls, value):
+        if isinstance(value, str):
+            return value.strip().lower() in {"true", "1", "yes", "enabled", "active", "on"}
+        if value is None:
+            return True
+        return bool(value)
 
 
 class LabDefinition(LabSummary):
     exercises: list[Exercise] = Field(default_factory=list)
-    formula: LabFormula
+    formula: LabFormula = Field(default_factory=LabFormula)
     topology: LabTopology | None = None
