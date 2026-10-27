@@ -3,7 +3,6 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - stage
       - production
 
 permissions:
@@ -65,8 +64,7 @@ jobs:
             export DOCKER_CLIENT_TIMEOUT=600
             export COMPOSE_HTTP_TIMEOUT=600
 
-            SERVICE_SUFFIX=${{ github.ref_name == 'production' && 'prod' || 'stage' }}
-            SERVICE_BACK="ipv6-back-$SERVICE_SUFFIX"
+            SERVICE_BACK="ipv6-back-prod"
 
             cd /home/deploy/myweb
 

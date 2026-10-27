@@ -72,7 +72,7 @@ topology_file: rutas_estaticas.clab.yml
 
 Same DonWeb / GHCR flow as English Platform, split across this repo and `ipv6beready-fe`.
 
-Pushing to `stage` or `production` builds `ghcr.io/rgermanm/ipv6beready-be:<branch>` and recreates `ipv6-back-stage` or `ipv6-back-prod` in the existing compose at `/home/deploy/myweb`.
+Pushing to `production` builds `ghcr.io/rgermanm/ipv6beready-be:production` and recreates `ipv6-back-prod` in `/home/deploy/myweb/docker-compose.yml`.
 
 ### GitHub setup (`ipv6beready-be`)
 
@@ -80,9 +80,9 @@ Repository secrets (same names as English Platform):
 
 - `SERVER_HOST`, `SERVER_USER`, `SERVER_PORT`, `SSH_PRIVATE_KEY`, `GHCR_TOKEN`
 
-Runtime config is **not** baked into the image. Put it next to the compose file as `/home/deploy/myweb/.env.ipv6-stage` and `.env.ipv6-prod`. On the VPS docker network use `MONGODB_SSH_TUNNEL=false` and point `MONGODB_URI` at `mongo-ipv6beready-prod`. Set `CORS_ORIGINS` to the deployed frontend origin.
+Runtime config is **not** baked into the image. Put it next to the compose file as `/home/deploy/myweb/.env.ipv6-prod`. On the VPS docker network use `MONGODB_SSH_TUNNEL=false` and point `MONGODB_URI` at `mongo-ipv6beready-prod`. Set `CORS_ORIGINS` to the deployed frontend origin.
 
-Add `ipv6-back-stage` / `ipv6-back-prod` (and the matching frontend services) to `/home/deploy/myweb/docker-compose.yml` if they are not there yet. Create `stage` and `production` branches from `main` when you are ready to ship.
+The compose file should already contain `ipv6-back-prod`. Create the `production` branch from `main` when you are ready to ship.
 
 ## Development
 
