@@ -25,4 +25,3 @@ htmlcov/
 *.backup
 *.bak
 scripts/
-docker-compose.server.yml

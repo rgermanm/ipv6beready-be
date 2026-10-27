@@ -68,7 +68,7 @@ jobs:
             SERVICE_SUFFIX=${{ github.ref_name == 'production' && 'prod' || 'stage' }}
             SERVICE_BACK="ipv6-back-$SERVICE_SUFFIX"
 
-            cd /home/deploy/ipv6beready
+            cd /home/deploy/myweb
 
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io \
