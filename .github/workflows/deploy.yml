@@ -1,0 +1,89 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - stage
+      - production
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DOCKER_BUILDKIT: 1
+  BUILDKIT_PROGRESS: plain
+  IMAGE_TAG: ${{ github.ref_name }}
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  build-back:
+    name: Build & Push Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push ipv6beready-be
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.IMAGE }}:${{ env.IMAGE_TAG }}
+          provenance: false
+          sbom: false
+
+  deploy:
+    name: Deploy to DonWeb
+    runs-on: ubuntu-latest
+    needs:
+      - build-back
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          command_timeout: 40m
+          script: |
+            set -Eeuo pipefail
+
+            export DOCKER_CLIENT_TIMEOUT=600
+            export COMPOSE_HTTP_TIMEOUT=600
+
+            SERVICE_SUFFIX=${{ github.ref_name == 'production' && 'prod' || 'stage' }}
+            SERVICE_BACK="ipv6-back-$SERVICE_SUFFIX"
+
+            cd /home/deploy/ipv6beready
+
+            echo "🔐 Logging into GHCR..."
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io \
+              -u ${{ github.repository_owner }} \
+              --password-stdin
+
+            echo "📦 Pulling ipv6beready-be (retries)..."
+            for i in 1 2 3 4; do
+              docker pull --quiet ${{ env.IMAGE }}:${{ github.ref_name }} && break
+              echo "Retry ipv6beready-be ($i/4)..."
+              sleep 30
+            done
+
+            echo "🚀 Recreating $SERVICE_BACK..."
+            docker compose up -d --no-deps --force-recreate $SERVICE_BACK
+
+            echo "🧹 Cleaning dangling images..."
+            docker image prune -f
