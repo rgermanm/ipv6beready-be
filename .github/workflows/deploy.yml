@@ -19,6 +19,7 @@ jobs:
   build-back:
     name: Build & Push Backend
     runs-on: ubuntu-latest
+    environment: Production
 
     steps:
       - uses: actions/checkout@v4
@@ -46,18 +47,25 @@ jobs:
   deploy:
     name: Deploy to DonWeb
     runs-on: ubuntu-latest
+    environment: Production
     needs:
       - build-back
 
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.8
+        env:
+          CLAB_REMOTE_HOST: ${{ secrets.CLAB_REMOTE_HOST }}
+          CLAB_REMOTE_PORT: ${{ secrets.CLAB_REMOTE_PORT }}
+          CLAB_REMOTE_USERNAME: ${{ secrets.CLAB_REMOTE_USERNAME }}
+          CLAB_REMOTE_PASSWORD: ${{ secrets.CLAB_REMOTE_PASSWORD }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           command_timeout: 40m
+          envs: CLAB_REMOTE_HOST,CLAB_REMOTE_PORT,CLAB_REMOTE_USERNAME,CLAB_REMOTE_PASSWORD
           script: |
             set -Eeuo pipefail
 
@@ -65,8 +73,42 @@ jobs:
             export COMPOSE_HTTP_TIMEOUT=600
 
             SERVICE_BACK="ipv6-back-prod"
+            CLAB_ENV="/home/deploy/myweb/.env.ipv6-clab"
+            CLAB_OVERRIDE="/home/deploy/myweb/docker-compose.ipv6-clab.yml"
+
+            if [ -z "${CLAB_REMOTE_PASSWORD:-}" ]; then
+              echo "CLAB_REMOTE_PASSWORD secret is missing in GitHub Actions"
+              exit 1
+            fi
 
             cd /home/deploy/myweb
+
+            umask 077
+            {
+              printf 'CLAB_REMOTE_HOST=%s\n' "$CLAB_REMOTE_HOST"
+              printf 'CLAB_REMOTE_PORT=%s\n' "$CLAB_REMOTE_PORT"
+              printf 'CLAB_REMOTE_USERNAME=%s\n' "$CLAB_REMOTE_USERNAME"
+              printf 'CLAB_REMOTE_PASSWORD=%s\n' "$CLAB_REMOTE_PASSWORD"
+            } > "$CLAB_ENV"
+
+            printf '%s\n' \
+              'services:' \
+              '  ipv6-back-prod:' \
+              '    env_file:' \
+              '      - .env.ipv6-clab' \
+              '    environment:' \
+              '      - CLAB_REMOTE_HOST' \
+              '      - CLAB_REMOTE_PORT' \
+              '      - CLAB_REMOTE_USERNAME' \
+              '      - CLAB_REMOTE_PASSWORD' \
+              > "$CLAB_OVERRIDE"
+
+            if [ -f .env.ipv6-prod ]; then
+              grep -vE '^CLAB_REMOTE_(HOST|PORT|USERNAME|PASSWORD)=' .env.ipv6-prod \
+                > .env.ipv6-prod.tmp || true
+              cat .env.ipv6-prod.tmp "$CLAB_ENV" > .env.ipv6-prod
+              rm -f .env.ipv6-prod.tmp
+            fi
 
             echo "🔐 Logging into GHCR..."
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io \
@@ -80,8 +122,13 @@ jobs:
               sleep 30
             done
 
-            echo "🚀 Recreating $SERVICE_BACK..."
-            docker compose up -d --no-deps --force-recreate $SERVICE_BACK
+            echo "🚀 Recreating $SERVICE_BACK with CLAB_REMOTE_* from Actions secrets..."
+            compose_args=(-f docker-compose.yml)
+            if [ -f docker-compose.override.yml ]; then
+              compose_args+=(-f docker-compose.override.yml)
+            fi
+            compose_args+=(-f "$CLAB_OVERRIDE")
+            docker compose "${compose_args[@]}" up -d --no-deps --force-recreate "$SERVICE_BACK"
 
             echo "🧹 Cleaning dangling images..."
             docker image prune -f

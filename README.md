@@ -76,11 +76,12 @@ Pushing to `production` builds `ghcr.io/rgermanm/ipv6beready-be:production` and 
 
 ### GitHub setup (`ipv6beready-be`)
 
-Repository secrets (same names as English Platform):
+Repository (or Production environment) secrets:
 
 - `SERVER_HOST`, `SERVER_USER`, `SERVER_PORT`, `SSH_PRIVATE_KEY`, `GHCR_TOKEN`
+- `CLAB_REMOTE_HOST`, `CLAB_REMOTE_PORT`, `CLAB_REMOTE_USERNAME`, `CLAB_REMOTE_PASSWORD`
 
-Runtime config is **not** baked into the image. Put it next to the compose file as `/home/deploy/myweb/.env.ipv6-prod`. On the VPS docker network use `MONGODB_SSH_TUNNEL=false` and point `MONGODB_URI` at `mongo-ipv6beready-prod`. Set `CORS_ORIGINS` to the deployed frontend origin.
+Runtime config is **not** baked into the image. Put Mongo/CORS and the rest next to the compose file as `/home/deploy/myweb/.env.ipv6-prod`. Deploy writes `CLAB_REMOTE_*` from GitHub Actions secrets into `/home/deploy/myweb/.env.ipv6-clab` and injects them into `ipv6-back-prod`. On the VPS docker network use `MONGODB_SSH_TUNNEL=false` and point `MONGODB_URI` at `mongo-ipv6beready-prod`. Set `CORS_ORIGINS` to the deployed frontend origin.
 
 The compose file should already contain `ipv6-back-prod`. Create the `production` branch from `main` when you are ready to ship.
 
