@@ -8,9 +8,10 @@ from app.db import close as close_db
 from app.db import connect as connect_db
 from app.db import ping as ping_db
 from app.repositories.labs import seed_labs
+from app.repositories.roadmaps import seed_roadmaps
 from app.repositories.instances import ensure_indexes as ensure_instance_indexes
 from app.repositories.users import ensure_indexes as ensure_user_indexes
-from app.routers import auth, console, labs, sessions
+from app.routers import auth, console, labs, roadmaps, sessions
 
 
 @asynccontextmanager
@@ -18,6 +19,7 @@ async def lifespan(_app: FastAPI):
     mongo_ok = connect_db()
     if mongo_ok:
         seed_labs()
+        seed_roadmaps()
         ensure_user_indexes()
         ensure_instance_indexes()
     yield
@@ -41,6 +43,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(labs.router, prefix="/api")
+app.include_router(roadmaps.router, prefix="/api")
 app.include_router(sessions.router, prefix="/api")
 app.include_router(console.router, prefix="/api")
 
